@@ -1,0 +1,1139 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Pose Tracking</title>
+
+		<link rel="stylesheet" href="css/reset.css">
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/league.css"  id='theme'>
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/monokai.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section data-menu-title="">
+					<h1>Human Pose Estimation</h1>
+					<p>Djalma Lúcio</p>
+					<p>Luiz Schirmer</p>
+					<p><small>Image Processing for Vision and Graphics 2020</small></p>
+				</section>
+
+				<section data-menu-title="Agenda" style="text-align: left;">
+					<h2 style="text-align: center;">Agenda</h2>
+					<p style="text-align: left;">
+						<ul style="font-size: 0.85em;">
+							<li>Visão Geral</li>
+							<li>
+								2D Human Pose Estimation
+								<ul>
+									<li>Server/Desktop (OpenPose)</li>
+									<li>Web (PoseNet)</li>
+									<li>Mobile (BlazePose)</li>
+								</ul>
+							</li>
+							<li>
+								TensorPose
+								<ul>
+									<li>TensorPose: Real-time pose estimation for interactive applications</li>
+									<li>A lightweight 2D Pose Machine with attention enhancement</li>
+									<li>Semantic graph convolutions with attention enhancement applied to pose estimation and computer animation</li>
+								</ul>
+
+							</li>
+						</ul>
+					</p>
+				</section>
+				
+				
+				<section data-menu-title="Visão Geral">
+					<h2>Visão Geral</h2>
+
+					<section data-menu-title="Visão Geral">
+						<h5 style="text-align: left; margin-top: 1.5em;">Introdução</h5>
+						<div style="display: flex;">
+							<div style="width: 60%; margin-right: 5%;">
+								<p style="text-align: justify; font-size: 0.70em;">
+									Pose Estimation é um dos problemas tratados em Visão Computacional, 
+									onde são detectadas a posição e orientação de um objeto. 
+									Isso geralmente significa detectar os locais dos keypoints que descrevem o objeto.
+								</p>
+							</div>
+
+							<div style="flex-grow: 1;">
+								<img src="images/pose_estimation_keypoints.png" alt="" srcset="" style="margin-bottom: 0;">
+							</div>
+						</div>
+						
+					</section>
+
+					<section data-menu-title="A tarefa">
+						<h4>A tarefa</h4>
+						<img src="images/pose_estimation_task.png" alt="" srcset="" style="margin-bottom: 0;">
+					</section>
+
+					<!-- 						
+							<div style="display: flex;">
+								<div style="width: 60%; margin-right: 5%;">
+	
+								</div>
+								<div style="flex-grow: 1;">
+									<img src="images/pose_estimation_keypoints.png" alt="" srcset="" style="margin-bottom: 0;">
+								</div>
+							</div>
+					 -->
+					<section data-menu-title="Desafios">
+						<h5 style="text-align: left; margin-top: 1.5em;">Desafios</h5>
+
+						<div style="display: flex;">
+							<div style="width: 90%; margin-right: 5%;">
+								<p style="text-align: justify; font-size: 0.75em;">
+									<!-- Inferir a pose de diversas pessoas em uma imagem possui um conjunto de desafios a serem superados. -->
+									<ul style="font-size: 0.70em;">
+										<li>Cada imagem pode conter um número desconhecido de pessoas que podem estar em qualquer posição e escala.</li>
+										<li>As interações entre as pessoas normalmente gera interferência, devido ao contato e oclusão, 
+											dificultando a realização da associação das partes.</li>
+									</ul> 
+								</p>
+							</div>
+							<div style="flex-grow: 1;">
+								<img src="images/pose_estimation_keypoints_challanges.png" alt="" srcset="" style="margin-bottom: 0;">
+							</div>
+						</div>
+
+					</section>
+
+					<!-- <section data-menu-title="Motivação">
+						<h5 style="text-align: left;">Motivação</h5>
+						<p style="text-align: justify; font-size: 0.9em;">
+							Atualmente há diversas aplicações que realizam a captura de movimento, 
+							contudo é necessário o uso de câmeras especiais e vestimenta apropriada para realizar esta tarefa.
+						</p>
+						<p style="text-align: justify; font-size: 0.9em;">
+							Este projeto tem como motivação a aplicação dos conhecimentos adquiridos durante sua implementação, 
+							no contexto de animação de personagens humanos e humanóides, 
+							através da captura de movimentos tanto no ambiente 2D como no 3D.
+						</p>
+					</section>
+
+				</section>
+				
+				<section data-menu-title="Estimação de pose">
+					<h3>Estimação de pose</h3> -->
+
+					<section data-menu-title="Segurança">
+						<!-- <h5 style="text-align: left; margin-top: 1.5em;">Estimação de Pose'</h5>
+						<p style="text-align: justify; font-size: 0.9em;">
+							Para o caso específico da estimação de pose de seres humanos,
+							a estimação de pose refere-se às técnicas de visão computacional que detectam figuras humanas em imagens e vídeos, 
+							para que se possa determinar, por exemplo, onde o cotovelo de alguém aparece em uma imagem.
+						</p> -->
+						<h5 style="text-align: left; margin-top: 1.5em;">Segurança</h5>
+						<p style="text-align: justify; font-size: 0.9em;">
+							Essa tecnologia não reconhece quem está em uma imagem, isto é, 
+							não há informações pessoais identificáveis associadas à detecção de pose. 
+							O algoritmo está simplesmente estimando onde estão as principais articulações do corpo.
+						</p>
+					</section>
+
+					<section data-menu-title="Abordagens">
+						<h5 style="text-align: left;">Abordagens</h5>
+						<p style="text-align: justify;">
+							A tarefa de detectar e localizar os keypoints de diversas pessoas em uma imagem
+							é realizada através das seguintes abordagens:
+							<ul style="text-align: left;">
+								<li>Top-Down</li>
+								<li>Bottom-Up</li>
+							</ul>
+						</p>
+					</section>
+
+					<section data-menu-title="Abordagem Top-Down">
+						<h5 style="text-align: left;">Abordagem Top-Down</h5>
+						<div style="display: flex;">
+							<div style="width: 60%; margin-right: 5%;">
+								<p style="text-align: justify; font-size: 0.60em;">
+									A abordagem comum para estimar a pose é empregar um detector de pessoas, e então, 
+									para cada pessoa detectada, realizar a estimativa da pose. 
+									Esta abordagem é conhecida como abordagem top-down. 
+									Um dos principais problemas com esta abordagem ocorre quando o detector de pessoas falha, 
+									sendo assim não há como recuperar as informações necessárias (os keypoints) para a estimativa da pose.
+								</p>
+							</div>
+
+							<div style="flex-grow: 1;">
+								<img src="images/Top-Down.png" alt="" srcset="" style="margin-bottom: 0;">
+								<p style="font-size: 0.3em; margin-top: 0; text-align: justify;">
+									Todos as pessoas são detectas, para depois o keypoints serem detectados e feitas as ligações entre eles
+								</p>
+							</div>
+						</div>
+					</section>
+
+					<section data-menu-title="Abordagem Bottom-Up">
+						<h5 style="text-align: left;">Abordagem Bottom-Up</h5>
+						<div style="display: flex;">
+							<div style="width: 60%; margin-right: 5%;">
+								<p style="text-align: justify; font-size: 0.70em;">
+									Na abordagem bottom-up as partes são detectadas para todas os pessoas de uma única vez,
+									sendo assim, não sofre o problema ocasionado pelo detector de pessoas. 
+								</p>
+							</div>
+
+							<div style="flex-grow: 1;">
+								<img src="images/Bottom-Up.png" alt="" srcset="" style="margin-bottom: 0;">
+								<p style="font-size: 0.3em; margin-top: 0; text-align: justify;">
+									Todos os keypoints são detectados e em seguida são feitas as ligações entre eles
+								</p>
+							</div>
+						</div>
+					</section>					
+
+					<section data-menu-title="Aplicações">
+						<h5 style="text-align: left;">Aplicações</h5>
+						<p style="text-align: justify; font-size: 0.80em;">
+							A estimação de pose tem muitos usos, 
+							desde instalações interativas que reagem ao corpo até realidade aumentada, 
+							animação, usos de condicionamento físico e muito mais; tais como:
+						</p>
+						<p>
+							<a href="https://experiments.withgoogle.com/experiments?tag=PoseNet" target="_blank" rel="noopener noreferrer">
+								Experiments with Google
+							</a>
+						</p>
+						<p>
+							<a href="https://mayaontheinter.net/posenetsketchbook/" target="_blank" rel="noopener noreferrer">
+								PoseNet Sketchbook
+							</a>
+						</p>
+						<p>
+							<a href="https://dev.to/devdevcharlie/playing-beat-saber-in-the-browser-with-body-movements-using-posenet-tensorflow-js-36km" target="_blank" rel="noopener noreferrer">
+								Playing Beat Saber in the browser with body movements using PoseNet & Tensorflow.js
+							</a>
+						</p>
+					</section>
+				</section>
+
+
+				<section data-menu-title="OpenPose">
+					<h2>OpenPose</h2>
+					<section data-menu-title="OpenPose">
+						<h3>
+							Multi-Person Pose Estimation <br> using Part Affinity Fields
+						</h3>
+						<h4 style="font-size: 0.8em;">
+							Zhe Cao, Shih-En Wei, Tomas Simon, Yaser Sheikh <br> 
+							<small>Carnegie Mellon University</small>
+						</h4>
+					</section>
+
+					<section data-menu-title="Visão Geral">
+						<h4 style="margin-top: 0.8em;">Visão Geral</h4>
+						<h4 style="font-size: 0.8em;">Jointly Learning Parts Detection and Parts Association</h4>
+						<img src="images/openpose_overview.png" alt="" srcset="" style="margin-bottom: 0;">
+					</section>
+
+					
+					<section data-menu-title="Arquitetura">
+						<h4>Arquitetura</h4>
+						<img src="images/openpose_architecture.png" alt="" srcset="" style="margin-bottom: 0;">
+					</section>
+
+
+					<section data-menu-title="Arquitetura - parts detection">
+						<h4 style="margin-top: 0.8em;">Arquitetura</h4>
+						<h4 style="font-size: 0.8em;">Parts detection</h4>
+						<img src="images/openpose_overview_parts_detection.png" alt="" srcset="" style="margin-bottom: 0;">
+					</section>
+
+
+					<section data-menu-title="Treinamento">
+						<h4>Treinamento</h4>
+						<img src="images/openpose_training.png" alt="" srcset="" style="margin-bottom: 0;">
+					</section>
+
+					<section data-menu-title="Pré-processamento - escala">
+						<h3>Pré-processamento</h3>
+						<h4 style="text-align: left;">Redimensionamento da imagem de entrada</h4>
+						<p style="text-align: justify;">
+							Como entrada o modelo necessita de uma imagem com resolução de <b>368x368</b>  pixels, 
+							sendo assim, é necessário escalar a imagem para estas dimensões. 
+						</p>
+					</section>
+
+					<section data-menu-title="Pré-processamento - mapas de confiança">
+						<h3 style="margin-top: 0.85em;">Pré-processamento</h3>
+						<h4 style="text-align: left;">Geração dos mapas de confiança GT</h4>
+						<div style="display: flex;">
+							<div style="width: 60%; margin-right: 5%;">
+								<p style="text-align: justify;">
+									Como a saída do modelo é composta pelos mapas de confiança para cada um dos 18 keypoints, 
+									então, é necessário a geração destes mapas ground truth para cada pessoa anotada na imagens. 
+								</p>
+
+							</div>
+							<div style="flex-grow: 1;">
+								<img src="images/openpose_confidence_map_gt.png" alt="" srcset="" style="margin-bottom: 0;">
+							</div>
+						</div>
+					</section>
+
+					<section data-menu-title="Pré-processamento - máscaras">
+						<h3 style="margin-top: 0.85em;">Pré-processamento</h3>
+						<h4 style="text-align: left;">Geração das máscaras GT</h4>
+						<div style="display: flex;">
+							<div style="width: 63%; margin-right: 5%;">
+								<p style="text-align: justify; font-size: 0.9em;">
+									A geração da máscara GT é necessária para evitar que o algoritmo 
+									seja "penalizado" por encontrar mais keypoints do que está anotado no dataset. 
+								</p>
+							</div>
+							<div style="flex-grow: 1;">
+								<img src="images/openpose_mask_gt.png" alt="" srcset="" style="margin-bottom: 0;">
+							</div>
+						</div>
+					</section>
+
+					<section data-menu-title="Treinamento">
+						<h3 style="margin-top: 0.85em;">Treinamento</h3>
+						<h4 style="text-align: left;">COCO Dataset 2017</h4>
+						<div style="display: flex;">
+							<div style="width: 65%; margin-right: 3%;">
+								<p style="text-align: center; font-size: 0.8em;">
+									IMAGENS
+									<ul style="font-size: 0.65em;">
+										<li>Imagens para treinamento: 118k</li>
+										<li>Imagens para validação: 5k</li>
+										<li>Imagens para teste: 41k</li>
+										<li>Imagens não rotuladas: 123k</li>
+									</ul>
+									API
+									<ul style="font-size: 0.7em;">
+										<li>Assists in loading, parsing, and visualizing annotations</li>
+										<li>Python, MatLab e Lua</li>
+									</ul>
+								</p>
+
+							</div>
+							<div style="flex-grow: 1;">
+								<img src="images/coco_dataset_logo.png" alt="" srcset="" style="margin-bottom: 0;">
+								<p style="font-size: 0.5em; margin-top: 0;">
+									250k instâncias de pessoas rotuladas com keypoints
+								</p>
+							</div>
+						</div>
+					</section>					
+
+
+					<section data-menu-title="Pós-processamento">
+						<h3 style="margin-top: 0.85em;">Pós-processamento</h3>
+						<h4 style="text-align: left; margin-bottom: 0.1em;">Non-maximum suppression</h4>
+						<div style="display: flex;">
+							<div style="width: 65%; margin-right: 3%;">
+								<p style="text-align: left; font-size: 0.5em;">
+									Para determinar a localização dos keypoints em coordenadas de pixel, 
+									é necessário executar o algoritmo non-maximum suppression (NMS):
+
+									<ol style="font-size: 0.50em;">
+										<li>Inicie no primeiro pixel do heatmap</li>
+										<li>A partir deste pixel crie uma janela 5x5 e identifique o pixel com valor máximo dentro dessa janela</li>
+										<li>Substitua o valor do pixel central por este valor máximo</li>
+										<li>Deslize um pixel da imagem com essa janela e repita o processo até completar todo o heatmap</li>
+										<li>Compare o heatmap gerado com o original. 
+											<ul>
+												<li>Os pixel que continuam com o mesmo valor são picos que procuramos.</li>
+												<li>Atribua o valor 0 aos demais pixels</li>
+											</ul>											 
+										</li>
+									</ol>
+								</p>
+
+							</div>
+							<div style="flex-grow: 1;">
+								<img src="images/openpose_nms.png" alt="" srcset="" style="margin-bottom: 0;">
+							</div>
+						</div>
+					</section>
+
+
+					<section data-menu-title="Body keypoints">
+						<h3 style="margin-top: 0.85em;">Body keypoints</h3>
+						<img src="images/openpose_skeleton.png" alt="" srcset="" style="margin-bottom: 0;">
+					</section>
+
+				</section>
+
+
+				<section data-menu-title="PoseNet - visão geral">
+					<h3>PoseNet <sub><small>visão geral</small></sub></h3>
+
+					<section data-menu-title="PoseNet - visão geral">
+						<p style="text-align: justify; font-size: 1.0em;">
+							PoseNet é um modelo de machine learning usado para fazer a estimação de pose de pessoas 
+							em tempo real no navegador usando o TensorFlow.js.							
+						</p> 
+						<p style="text-align: justify; font-size: 1.0em;">
+							Esta seção apresenta uma visão geral do modelo.
+							Mais informações podem ser encontradas no repositório do
+							<a href="https://github.com/tensorflow/tfjs-models/tree/master/posenet" target="_blank" rel="noopener noreferrer">
+								projeto PoseNet no github
+							</a>
+							e no post 
+							<a href="https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5" target="_blank" rel="noopener noreferrer">
+								Real-time Human Pose Estimation in the Browser with TensorFlow.js
+							</a>
+						</p>
+					</section>
+					<section data-menu-title="Modos de execução">
+						<p style="text-align: justify; font-size: 1.0em;">
+							O modelo PoseNet possui os modos de execução single-pose e multi-pose. <br>
+							Isto significa que ele pode ser usado para estimar a pose de somente uma única pessoa ou a pose de múltiplas pessoas
+							em uma imagem ou vídeo. 
+						</p>
+						
+					</section>
+
+					<section data-menu-title="Single-pose">
+						<h5 style="text-align: left; margin-top: 5%;">Single-pose</h5>
+						<div style="display: flex;">
+							<div style="width: 60%; margin-right: 5%;">
+								<p style="text-align: justify; font-size: 0.6em;">
+									A detecção de um única pessoa é mais rápida e mais simples.
+									Esse modo é ideal para o caso onde somente há uma pessoa no centro da imagem ou vídeo.
+								</p>
+								<p style="text-align: justify; font-size: 0.6em;">
+									A desvantagem deste modo é que se houver múltiplas pessoas na imagem, 
+									os keypoints de todas as pessoas serão estimadas como se fossem da mesma pessoa. 
+									Por exemplo, o braço esquerdo da pessoa nº 1 e o joelho direito da pessoa nº 2 
+									podem ser confundidos pelo algoritmo como pertencendo à mesma pose.
+								</p>
+							</div>
+
+							<div  style="flex-grow: 1;">
+								<img src="images/posenet_single_person.gif" alt="" srcset="" style="margin-bottom: 0;">
+								<p style="font-size: 0.3em; margin-top: 0;">
+									Algoritmo executado no modo single-pose
+								</p>
+							</div>
+
+						</div>
+					</section>
+
+					<section data-menu-title="Multi-pose">
+						<h5 style="text-align: left; margin-top: 5%;">Multi-pose</h5>
+						<div style="display: flex;">
+							<div style="width: 60%; margin-right: 5%;">
+								<p style="text-align: justify; font-size: 0.6em;">
+									O algoritmo de estimativa de pose para várias pessoas
+									é mais complexo e um pouco mais lento que o algoritmo de pose única.
+								</p>
+								<p style="text-align: justify; font-size: 0.6em;">
+									Contudo, tem a vantagem de que, se várias pessoas aparecerem em uma imagem, 
+									é menos provável que os keypoints detectados estejam associados à pose errada.
+								</p>
+								<p style="text-align: justify; font-size: 0.6em;">
+									Outra vantagem é que o desempenho não é afetado pelo número de pessoas na imagem de entrada. 
+									Isto é, se houver 15 pessoas para detectar ou 5, o tempo de computação será o mesmo.
+								</p>
+							</div>
+
+							<div  style="flex-grow: 1;">
+								<img src="images/posenet_multiple_person.gif" alt="" srcset="" style="margin-bottom: 0;">
+								<p style="font-size: 0.3em; margin-top: 0;">
+									Algoritmo executado no modo multi-pose
+								</p>
+							</div>
+
+						</div>
+					</section>
+
+					<section data-menu-title="Com funciona">
+						<h5 style="text-align: left; margin-top: 5%;">Como funciona</h5>
+						<p style="text-align: justify; font-size: 0.9em;">
+							A estimação de pose ocorre em duas fases:
+							<ol style="text-align: justify; font-size: 0.9em;">
+								<li>
+									Uma imagem RGB é utilizada como entrada para a CNN do modelo
+								</li>
+								<li>
+									Tanto no modo single-pose quanto no multi-pose, a saída do modelo é decodificada, obtendo-se:
+									<ul>
+										<li>as poses detectadas</li>
+										<li>o score de confiança das poses detectadas</li>
+										<li>a posição dos keypoints</li>
+										<li>o score de confiança dos keypoints</li>
+									</ul>
+								</li>
+							</ol>
+						</p>
+					</section>
+
+					<section data-menu-title="Pose">
+						<!-- <h5 style="text-align: left; margin-top: 5%;">Pose</h5> -->
+						<div style="display: flex;">
+							<div style="margin-right: 3%; flex: 0 0 50%">
+								<p style="text-align: left; font-size: 0.90em;">
+									<strong>Pose</strong>
+								</p>
+								<p style="text-align: justify; font-size: 0.60em;">
+									O modelo PoseNet retorna um objeto de pose 
+									que contém uma lista de keypoints e um score de confiança 
+									para cada pessoa detectada.
+								</p>
+
+								<p style="text-align: left; font-size: 0.90em;">
+									<strong>Score de confiança do keypoint</strong>
+								</p>
+								<p style="text-align: justify; font-size: 0.60em;">
+									Determina a confiança de que a posição estimada do keypoint é precisa. 
+									Seu valor varia entre 0.0 e 1.0.<br>
+									Este valor pode ser usado para ocultar keypoints que não são considerados precisos o suficiente.
+								</p>
+							</div>
+
+							<div  style="flex: 1 0  60%;">
+								<img src="images/posenet_confidence_score_vs_keypoint_score.png" alt="" srcset="" style="margin-bottom: 0; margin-top: 15%;">
+								<!-- <p style="font-size: 0.25em; margin-top: 0;">
+									Fonte: <a href="https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5" target="_blank" rel="noopener noreferrer">
+										<i>Real-time Human Pose Estimation in the Browser with TensorFlow.js</i>
+									</a>
+								</p> -->
+							</div>
+							
+						</div>
+					</section>
+
+					<section data-menu-title="Keypoints">
+						<h5 style="text-align: left; margin-top: 5%; font-size: 0.80em;">Keypoints</h5>
+						<div style="display: flex;">
+							<div style="margin-right: 5%; flex: 0 0 50%">
+								<p style="text-align: justify; font-size: 0.65em;">
+									Cada keypoint é uma parte da pose estimada de uma pessoa,
+									como nariz, orelha direita, joelho esquerdo, pé direito, etc.<br><br>
+									Nele está contida sua posição e o seu score de confiança.<br><br>
+									Atualmente, o modelo PoseNet detecta 17 keypoints.
+								</p>
+							</div>
+
+							<div  style="flex: 1 0 60%;">
+								<img src="images/posenet_keypoints.png" alt="" srcset="" style="margin-bottom: 0;">
+								<!-- <p style="font-size: 0.25em; margin-top: 0;">
+									Fonte: <a href="https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5" target="_blank" rel="noopener noreferrer">
+										<i>Real-time Human Pose Estimation in the Browser with TensorFlow.js</i>
+									</a>
+								</p> -->
+							</div>
+							
+						</div>
+					</section>
+				</section>
+
+
+				<section data-menu-title="PoseNet - visão técnica">
+					<h3>PoseNet <sub><small>visão técnica</small></sub></h3>
+
+					<section data-menu-title="PoseNet - visão técnica">
+						<h5 style="text-align: left; margin-top: 5%; font-size: 0.80em;">Processo de estimação</h5>
+						<div style="display: flex;">
+							<div style="margin-right: 5%; flex: 0 0 50%">
+								<p style="text-align: justify; font-size: 0.60em;">
+									A imagem ao lado ilustra o processo de estimação da pose.
+
+									Existem duas versões do modelo PoseNet, uma delas foi treinada 
+									usando como backbone a MobileNet V1 e a outra a ResNet 50.
+								</p>
+								<p style="text-align: justify; font-size: 0.60em;">
+
+									A versão com a ResNet possui maior precisão, 
+									contudo ela é bem maior e possui muitas camadas, 
+									o que torna mais lento o carregamento da página. 
+								</p>
+								<p style="text-align: justify; font-size: 0.60em;">
+
+									Sendo assim, a versão com MobileNet é a ideal para as aplicações de tempo real 
+									que irão rodar em dispositivos móveis e computadores menos potentes.
+										
+								</p>
+							</div>
+
+							<div  style="flex: 1 0 60%;">
+								<img src="images/posenet_single_person_pose_detector_pipeline.png" alt="" srcset="" style="margin-bottom: 0;">
+								<!-- <p style="font-size: 0.25em; margin-top: 0;">
+									Pipeline de estimação de pose<br>
+									Fonte: <a href="https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5" target="_blank" rel="noopener noreferrer">
+										<i>Real-time Human Pose Estimation in the Browser with TensorFlow.js</i>
+									</a>
+								</p> -->
+							</div>
+							
+						</div>
+					</section>
+
+					<section data-menu-title="Output stride">
+						<h5 style="text-align: left; margin-top: 5%; margin-bottom:0; font-size: 0.70em;">Output stride</h5>
+						<div style="display: flex;">
+							<div style="margin-right: 5%; flex: 0 0 50%">
+								<p style="text-align: justify; font-size: 0.50em;">
+									O modelo PoseNet é invariante com relação ao tamanho da imagem, 
+									isto significa que ele pode estimar a pose independente da escala da imagem. 
+									
+								</p>
+								<p style="text-align: justify; font-size: 0.50em;">
+									Sendo assim o modelo pode ter sua precisão aumentada apenas configurando,
+									em tempo de execução, o parâmetro output stride.  
+									Lembrando que aumentar a precisão diminui o desempenho. 
+									
+								</p>
+								<p style="text-align: justify; font-size: 0.50em;">
+
+									O parâmetro output stride determina o quanto a saída será diminuída em relação ao tamanho da imagem de entrada.
+									Este parâmetro influencia no tamanho dos layers da rede e das saídas, e na precisão.
+								</p>
+								<p style="text-align: justify; font-size: 0.50em;">
+									O output stride pode ser configurado com os valores 8, 16 ou 32. 
+									Com o valor 32, o desempenho aumenta porém a precisão diminui. 
+									Já com o valor 8 a precisão aumenta mas o desempenho diminui. 
+										
+								</p>
+							</div>
+
+							<div  style="flex: 1 0 60%;">
+								<img src="images/posenet_output_stride.png" alt="" srcset="" style="margin-bottom: 0;">
+								<!-- <p style="font-size: 0.25em; margin-top: 0;">
+									Fonte: <a href="https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5" target="_blank" rel="noopener noreferrer">
+										<i>Real-time Human Pose Estimation in the Browser with TensorFlow.js</i>
+									</a>
+								</p> -->
+							</div>
+							
+						</div>
+					</section>
+
+					<section data-menu-title="Heatmaps & Offset Vectors (I)" style="margin-left: 0;">
+						<h5 style="text-align: left; margin-top: 5%; margin-bottom:0; font-size: 0.62em;">heatmaps & offset vectors</h5>
+						<div style="display: flex;">
+							<div style="margin-left: -10%; flex: 0 0 60%;">
+								<p style="text-align: justify; font-size: 0.55em;">
+									As saídas do modelo PoseNet são um heatmap e um offset vector que devem ser 
+									decodificados para que seja encontrada a área da imagem onde há a maior probabilidade de haver keypoints da pose estimada. 
+									Isto significa que os keypoints da pose estimada estão associados a um tensor para heatmap e um tensor para o offset vector. 
+									
+								</p>
+								<p style="text-align: justify; font-size: 0.55em;">
+									Tanto o heatmap quanto o offset vector são tensores 3D com uma determinada altura e comprimento que são referenciadas como resolução. 
+									A resolução é definida através do tamanho da imagem e do valor do parâmetro output stride.																		
+									
+								</p>								
+							</div>
+
+							<div  style="flex: 1; margin-left: -10%;">
+								<pre style="width: 60%;">
+									<code data-trim data-noescape  style="font-size: 0.55em;">
+										Resolution = ((InputImageSize - 1) / OutputStride) + 1
+										// Example: an input image with a width of 225 pixels and an output
+										// stride of 16 results in an output resolution of 15
+										// 15 = ((225 - 1) / 16) + 1
+										
+									</code>
+								</pre>
+							</div>
+							
+						</div>
+						
+					</section>
+					<section>
+						<!-- Slide com a figura do heatmap e offset vector -->
+						<img src="images/posenet_heatmap_offset_vector.png" alt="" srcset="" style="margin-top: 5%;">
+					</section>
+
+
+					<section data-menu-title="Heatmaps & Offset Vectors (II)" style="margin-left: 0;">
+						<div style="display: flex;">
+							<div style="margin-left: -10%; flex: 0 0 60%;">
+								<h5 style="text-align: left; margin-top: 5%; margin-bottom:0; font-size: 0.62em;">heatmaps</h5>
+								<p style="text-align: justify; font-size: 0.55em;">
+									Cada heatmap é um tensor 3D de tamanho resolução x resolução x 17, 
+									onde 17 é o número de keypoints detectados pelo PoseNet.
+								</p> 
+								<p style="text-align: justify; font-size: 0.55em;">
+									Por exemplo, uma imagem com tamanho de 225 e output stride de 16, resultará em um tensor de 15x15x17. 
+									Cada fatia corresponde a um específico keypoint no heatmap. 
+									Cada posição no headmap possui um score de confiança, 
+									o qual é a probabilidade que o keypoint existe naquela posição. 
+																			
+								</p>
+								<p style="text-align: justify; font-size: 0.55em;">
+									Ela também pode ser vista como a imagem original sendo dividida em um gride de 15x15, 
+									onde os scores do heatmap fornecem uma classificação da probabilidade de cada keypoint existir em cada quadrado do gride.
+								</p>								
+							</div>
+
+							<div  style="flex: 1 0 60%; margin-left: 5%;">
+								<h5 style="text-align: left; margin-top: 5%; margin-bottom:0; font-size: 0.62em;">offset vectors</h5>
+
+								<p style="text-align: justify; font-size: 0.55em;">
+									Cada offset vector é um tensor 3D de tamanho resolução x resolução x 34, 
+									onde 34 é o número de keypoints vezes 2. 									
+								</p>
+								<p style="text-align: justify; font-size: 0.55em;">
+										Por exemplo, uma imagem com tamanho de 225 e output stride de 16, resultará em um tensor de 15x15x34. 
+										Sabendo que os heatmaps são um aproximação de onde os keypoints estão, 
+										os offset vectors correspondem, em localização, aos pontos do heatmap, 
+										e são usados para fazer a predição da localização exata dos keypoints. 
+								</p>
+								<p style="text-align: justify; font-size: 0.55em;">
+									Nas primeiras 17 fatias do offset vector estão os valores da coordenada x 
+									e as últimas 17 fatias estão os valores da coordenada y.
+								</p>
+							</div>
+							
+						</div>
+						
+					</section>
+					
+					<section data-menu-title="Estimando a pose">
+						<h5 style="text-align: left; margin-top: 5%; margin-left: -10%; font-size: 0.62em;">Estimando a pose</h5>
+						<div style="display: flex;">
+							<div style="margin-left: -10%; flex: 0 0 50%;">
+								<p style="text-align: justify; font-size: 0.45em;">
+									Depois que a imagem é processada pelo modelo, alguns cálculos são realizados para estimar a pose a partir das saídas. 
+								</p> 
+								<p style="text-align: justify; font-size: 0.45em;">
+									Por exemplo, no modo single-pose é retornado o score da confiança da pose, 
+									o qual contém um array de keypoints, indexados pelo ID da parte, 
+									cada um contendo o score da confiança e as coordenadas x,y da posição.
+								</p>
+								<p style="text-align: justify; font-size: 0.45em;">
+									Para obter os keypoints da pose:
+								</p>
+								<ol style="text-align: justify; font-size: 0.45em;">
+									<li>
+										Aplica-se uma ativação sigmoid no heatmap para se obter os scores
+										<pre style="width: 42%;">
+											<code data-trim data-noescape class="hljs" style="font-size: 1.3em;">
+												scores = heatmap.sigmoid()
+											</code>
+										</pre>
+									</li>
+									<li>
+										É aplicado o argmax2d no score de confiança do keypoint para obter os índices x e  y 
+										no heatmap com o maior score de cada parte, ou seja é essencialmente onde a parte existe. 
+										É retornado um tensor de tamanho 17x2, onde cada linha dele estão os índices y e x do heatmap. 
+										<pre style="width: 62%;">
+											<code data-trim data-noescape class="javascript" style="font-size: 1.3em;">
+												heatmapPositions = scores.argmax(y, x)
+											</code>
+										</pre>
+									</li>
+								</ol>
+							</div>
+
+							<div  style="flex: 1; margin-left: 5%;">
+								<p style="text-align: justify; font-size: 0.55em;">
+									<ol start="3" style="text-align: justify; font-size: 0.45em;">
+										<li>
+											O offset vector de cada parte é recuperado ao usar  os índices x e y retornados 
+											pelo objeto offset que usa os índices x e y correspondentes no heatmap para a parte.  
+											Por exemplo, para a parte k, quando a posição no heatmap for x e y, o offset vector é:
+											<pre style="width: 90%;">
+												<code data-trim data-noescape class="javascript" style="font-size: 1.3em;">
+													offsetVector = [offsets.get(y, x, k), offsets.get(y, x, 17 + k)]
+												</code>
+											</pre>
+										</li>
+										<li>
+											Para obter o keypoint, os índices x e y do heatmap de cada parte são multiplicados pelo output stride 
+											e depois adicionado ao seu offset vector correspondente, que está na mesma escala da imagem original.
+											<pre style="width: 94%;">
+												<code data-trim data-noescape class="javascript" style="font-size: 1.3em;">
+													keypointPositions = heatmapPositions * outputStride + offsetVectors
+												</code>
+											</pre>
+										</li>
+										<li>
+											O score da confiança de cada keypoint é o score da posição do seu heatmap. 
+											E o score da confiança da pose é a média dos scores dos keypoints.
+										</li>
+									</ol>
+								</p>
+							</div>
+							
+						</div>
+
+					</section>
+
+				</section>
+
+
+				<section data-menu-title="PoseNet - Bibliotecas">
+
+					<h3>PoseNet - Bibliotecas</h3>
+
+					<section data-menu-title="PoseNet - Bibliotecas">
+						<h3>P5.js + ML5.js</h3>
+					</section>
+					
+					<section data-menu-title="p5.js">
+						<h5 style="text-align: left; margin-top: 5%;">
+							<a href="https://p5js.org/" target="_blank" rel="noopener noreferrer">p5.js</a>
+						</h5>
+
+						<p style="text-align: justify; font-size: 0.9em;">
+							O p5.js é uma biblioteca JavaScript com foco em tornar a codificação acessível e 
+							inclusiva para artistas, designers, educadores, iniciantes etc.
+							<br><br>
+							O p5.js usa a metáfora de sketch, possuindo um conjunto completo de funcionalidades para desenhar.
+							Mas ele não está limitado somente ao canvas, ele também oferece suporte aos diversos objetos do HTML5,
+							como texto, input, vídeo, câmera e som.
+						</p>
+					</section>
+					<section data-menu-title="ml5.js">
+						<h5 style="text-align: left; margin-top: 5%;">
+							<a href="https://ml5js.org/" target="_blank" rel="noopener noreferrer">ml5.js</a>
+						</h5>
+
+						<p style="text-align: justify; font-size: 0.90em;">
+							A biblioteca fornece acesso aos algoritmos e modelos de machine learning no navegador, 
+							com base no TensorFlow.js sem outras dependências externas.
+							<br><br>
+							A biblioteca fornece diversos exemplos de código e tutoriais.
+							<br><br>
+							O ml5.js é fortemente inspirado no Processing e no p5.js, como informado no post 
+							<a href="https://medium.com/ml5js/ml5-friendly-open-source-machine-learning-library-for-the-web-e802b5da3b2" target="_blank" rel="noopener noreferrer">
+								ml5: Friendly Open Source Machine Learning Library for the Web
+							</a>
+						</p>
+					</section>
+
+					
+				</section>
+
+				<section data-menu-title="Pose Tracking">
+					<h3>
+						Pose Tracking
+					</h3>
+					<section data-menu-title="Pose Tracking">
+						<p style="text-align: justify;">
+							No projeto <a href="../posetracking/" target="_blank">Pose Tracking</a>  
+							é utilizado o modelo 
+							<a href="https://github.com/tensorflow/tfjs-models/tree/master/posenet" target="_blank">PoseNet</a> 
+							para detectar a pose das diversas pessoas, 
+							e para o rastreamento e identificação de cada pose detectada é utilizado o algoritmo 
+							<a href="https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/" target="_blank">Centroid Tracking</a>.
+							<br><br>
+							O código-fonte encontra-se disponível no
+							<a href="https://github.com/dlucio/inf2064/tree/master/project/posetracking" target="_blank" rel="noopener noreferrer">
+								github do projeto</a>.
+						</p>
+					</section>
+
+					<section data-menu-title="Centroid Tracking">
+						<h5 style="text-align: left; margin-top: 5%;">
+							Centroid Tracking
+						</h5>
+						<p style="text-align: justify; font-size: 0.75em;">
+							A implementação do algoritmo Centroid Tracking neste trabalho é uma conversão para Javascript
+							da implementação em Python encontrada e explicada com detalhes no post 
+							<a href="https://www.pyimagesearch.com/2018/07/23/simple-object-tracking-with-opencv/" target="_blank">
+								Simple object tracking with OpenCV.
+							</a>
+							<br><br>
+							Esse algoritmo é chamado de Centroid Tracking, pois se baseia na distância euclidiana entre 
+							(1) centróide de objeto existente, ou seja, objetos que o algoritmo já havia visto antes e 
+							(2) novos centróides de objeto entre frames subsequentes em um vídeo.
+							<br><br>
+							O algoritmo é processado em várias etapas conforme apresentado a seguir.
+						</p>
+					</section>
+
+					<section data-menu-title="Centroid Tracking: Etapa 1">
+						<h5 style="text-align: center; font-size: 0.80em;">
+							Etapa 1: Obter as coordenadas do bounding box e calcular os centróides
+						</h5>
+						<div style="display: flex;">
+							<div style="margin-left: -10%; flex: 0 0 60%;">
+								<p style="text-align: justify; font-size: 0.60em;">
+									A cada frame o algoritmo recebe as coordenadas da bounding box de cada objeto detectado no frame.
+									<br><br>
+									Estas bounding boxes são geradas a partir das coordenadas dos keypoints detectados pelo modelos PoseNet.
+									<br><br>
+									Estas coordenadas são utilizadas para calcular o centróide, ou seja, o centro da bounding box.
+									<br><br>
+									Como esse é o conjunto inicial de bounding boxes apresentado ao algoritmo, então, nesse momento, 
+									são criados os identificadores únicos dos objetos.
+								</p>
+							</div>
+
+							<div  style="flex: 1 0 45%; margin-left: 5%;">
+								<img src="images/simple_object_tracking_step1.png" alt="" srcset="">
+								<p style="font-size: 0.35em; margin-top: 0;">
+									Bounding boxes usadas para calcular os centróides
+								</p>
+							</div>
+						</div>
+					</section>
+
+					<section data-menu-title="Centroid Tracking: Etapa 2">
+						<h5 style="text-align: center; font-size: 0.80em;">
+							Etapa 2: Cálculo da distância Euclidiana entre as novas bounding boxes e os objetos existentes
+						</h5>
+						<div style="display: flex;">
+							<div style="margin-left: -10%; flex: 0 0 60%;">
+								<p style="text-align: justify;  font-size: 0.60em;">
+									Em cada frame subsequente é aplicada a Etapa 1 para calcular os centróides dos objetos; contudo,
+									ao invés de atribuir um identificador único para cada objeto detectado, 
+									primeiro é verificado se é possivel associar o centróide de um novo objeto (em amarelo) 
+									com o centróide de um objeto antigo (em rosa).
+									<br><br>
+									Para realizar este processo, é calculada a distância Euclidiana (setas verdes) 
+									entre cada par dos centróides dos objetos existentes e os centróides dos objetos de entrada.
+								</p>								
+							</div>
+
+							<div  style="flex: 1 0 45%; margin-left: 5%;">
+								<img src="images/simple_object_tracking_step2.png" alt="" srcset="">
+								<p style="font-size: 0.35em; margin-top: 0;">
+									Distância Euclidiana calculada entre os centróides existentes (vermelho) e os novos (verde)
+								</p>
+							</div>
+						</div>
+					</section>
+
+					<section data-menu-title="Centroid Tracking: Etapa 3">
+						<h5 style="text-align: center; font-size: 0.80em;">
+							Etapa 3: Atualizando as coordenadas do objetos existentes
+						</h5>
+						<div style="display: flex;">
+							<div style="margin-left: -10%; flex: 0 0 60%;">
+								<p style="text-align: justify;  font-size: 0.65em;">
+									A principal suposição usada pelo algoritmo Centroid Tracking é de que, provavelmente, 
+									um objeto irá se mover entre os frames subsequentes, mas a distância entre os centróides 
+									nos frames F<sub>t</sub> e F<sub>t+1</sub>
+									será menor do que todas as outras distâncias entre os objetos.
+									<br><br>
+									Portanto, se optarmos por associar os centróides com distâncias mínimas entre 
+									os frames subseqüentes, teremos o tracking dos objetos.
+																				
+								</p>
+							</div>
+
+							<div  style="flex: 1 0 45%; margin-left: 5%;">
+								<img src="images/simple_object_tracking_step3.png" alt="" srcset="">
+								<p style="font-size: 0.35em; margin-top: 0;">
+									O algoritmo associando centróides que minimizam suas respectivas distâncias euclidianas.
+								</p>
+							</div>
+						</div>
+					</section>
+
+					<section data-menu-title="Centroid Tracking: Passo 4">
+						<h5 style="text-align: center; font-size: 0.80em; margin-top: 3%;">
+							Etapa 4: Registrando novos objetos
+						</h5>
+						<div style="display: flex;">
+							<div style="margin-left: -10%; flex: 0 0 60%;">
+								<p style="text-align: justify;  font-size: 0.65em;">
+									No caso em que houver mais detecções de entrada do que 
+									objetos existentes sendo rastreados, é necessário registrar o novo objeto. <br><br>
+									"Registrar" significa simplesmente que o novo objeto será adicionado à lista de objetos rastreados,
+									realizando as seguintes ações:
+									<ol style="font-size: 0.60em; margin-left: 1.5em;">
+										<li>
+											Atribuindo um novo ID de objeto
+										</li>
+										<li>
+											Armazenando o centróide das coordenadas da bounding box para esse objeto
+										</li>
+									</ol>
+
+								</p>
+								<p style="text-align: justify;  font-size: 0.65em;">
+									Após feito o registro, a Etapa 2 é executada e o pipeline é repetido para cada frame no stream de vídeo.
+								</p>
+							</div>
+
+							<div  style="flex: 1 0 45%; margin-left: 5%;">
+								<img src="images/simple_object_tracking_step4.png" alt="" srcset="">
+								<p style="font-size: 0.35em; margin-top: 0;">
+									A figura demonstra o processo de usar as distâncias euclidianas mínimas 
+									para associar IDs de objetos existentes e, em seguida, registrar um novo objeto.
+								</p>
+							</div>
+						</div>
+					</section>
+
+					<section data-menu-title="Centroid Tracking: Passo 5">
+						<h5 style="text-align: center; font-size: 0.80em;">
+							Passo 5: Cancelar o registro de objetos antigos
+						</h5>
+						<p style="text-align: justify;  font-size: 0.75em;">
+								Qualquer algoritmo de rastreamento de objeto razoável precisa ser capaz de lidar com a perda, 
+								o desaparecimento ou a saída de um objeto do campo de visão.
+								<br><br>
+								A maneira exata de lidar com essas situações depende realmente de como o tracker de objeto é implementado.
+								<br><br>
+								Nesta implementação, o registro de objetos antigos é cancelado quando eles não puderem corresponder 
+								a nenhum objeto existente para um total de N frames subsequentes.
+						</p>
+					</section>
+
+				</section>
+
+
+				<section data-menu-title="BlazbePose">
+					<h2>
+						<a href="https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html" target="_blank" rel="noopener noreferrer">
+							BlazePose
+						</a>
+					</h2>
+					<section data-menu-title="BlazePose"> 
+						<h3>Real-time Body Pose Tracking On-device</h3>
+					</section>
+
+					<section data-menu-title="Visão Geral">
+						<!-- <h3>Visão Geral</h3> -->
+						<h4 style="text-align: left;">Pipeline</h4>
+						<p style="text-align: left; font-size: 0.8em;">
+							The solution utilizes a two-step detector-tracker ML pipeline. 
+							<ul style="font-size: 0.8em;">
+								<li>Using a detector, the pipeline first locates the pose region-of-interest (ROI) within the frame.</li>
+								<li>The tracker subsequently predicts the pose landmarks within the ROI using the ROI-cropped frame as input. </li>
+							</ul>
+						<p>
+						<p style="text-align: left; font-size: 0.8em;">
+							Note that for video use cases the detector is invoked only as needed 
+							<ul style="font-size: 0.8em;">
+								<li>For the very first frame and when the tracker could no longer identify body pose presence in the previous frame.</li>
+								<li>For other frames the pipeline simply derives the ROI from the previous frame’s pose landmarks.</li>
+							</ul>
+						</p>
+					</section>
+
+					<section data-menu-title="Pipeline">
+						<h3>Pipeline</h3>
+						<div style="display: flex;">
+							<!-- <div style="width: 88%; margin-right: 0%;">
+							</div> -->
+							<div style="flex-grow: 1;">
+								<img src="images/blazepose_pipeline.jpg" alt="" srcset="" style="margin-bottom: 0;">
+								<p style="font-size: 0.35em; margin-top: 0;">
+									Human pose estimation pipeline overview.
+								</p>
+							</div>
+						</div>
+
+					</section>					
+
+					<section data-menu-title="Tracking model">
+						<h3>Tracking Model</h3>
+						<div style="display: flex;">
+							<div style="width: 60%; margin-right: 5%; font-size: 0.8em; text-align: left;">
+								During training 
+								<ul style="font-size: 0.9em;">
+									<li>first employ a heatmap and offset loss to train the center and left tower of the network.</li>
+									<li>then remove the heatmap output and train the regression encoder (right tower)</li>
+									<li>thus, effectively using the heatmap to supervise a lightweight embedding.</li>
+								</ul>
+							</div>
+							<div style="flex-grow: 1;">
+								<img src="images/blazepose_tracking_model.jpg" alt="" srcset="" style="margin-bottom: 0;">
+								<p style="font-size: 0.45em; margin-top: 0; text-align: left;">
+									Tracking network architecture: regression with heatmap supervision
+								</p>
+							</div>
+						</div>
+					</section>
+
+
+					<section data-menu-title="Topologia">
+						<h3>Topologia</h3>
+						<div style="display: flex;">
+							<!-- <div style="width: 88%; margin-right: 0%;">
+							</div> -->
+							<div style="flex-grow: 1;">
+								<img src="images/blazepose_topology.jpg" alt="" srcset="" style="margin-bottom: 0;">
+								<p style="font-size: 0.35em; margin-top: 0;">
+									BlazePose 33 keypoint topology as COCO (colored with green) superset
+								</p>
+							</div>
+						</div>
+
+					</section>
+
+					<section data-menu-title="Topologia: MediaPipe">
+						<h3>Topologia <a href="https://google.github.io/mediapipe/solutions/pose#mobile" target="_blank" rel="noopener noreferrer">MediaPipe</a></h3>
+						<div style="display: flex;">
+							<!-- <div style="width: 88%; margin-right: 0%;">
+								<img src="images/blazepose_topology.jpg" alt="" srcset="" style="margin-bottom: 0;">
+								<p style="font-size: 0.35em; margin-top: 0;">
+									BlazePose 33 keypoint topology as COCO (colored with green) superset
+								</p>
+							</div> -->
+							<div style="flex-grow: 1;">
+								<img src="images/blazepose_pose_tracking_upper_body_landmarks.png" alt="" srcset="" style="margin-bottom: 0;">
+								<p style="font-size: 0.45em; margin-top: 0;">
+									MediaPipe Pose predicts the location of 25 upper-body landmarks (see figure below), each with (x, y, z, visibility). <br>
+									Note that the z value should be discarded as the model is currently not fully trained to predict depth.
+								</p>
+							</div>
+						</div>
+					</section>
+
+					<section data-menu-title="Desempenho">
+						<h3>Desempenho</h3>
+						<div style="display: flex;">
+							<!-- <div style="width: 88%; margin-right: 0%;">
+							</div> -->
+							<div style="flex-grow: 1;">
+								<img src="images/blazepose_performance.png" alt="" srcset="" style="margin-bottom: 0;">
+							</div>
+						</div>
+
+					</section>
+
+				</section>
+				
+			</div>
+		</div>
+
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+				menu: {
+					numbers: false,
+					openSlideNumber: true,
+					themes: true,
+					themesPath: 'css/theme/',
+					transitions: true,
+					hideMissingTitles: true,
+				},
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true },
+					{ src: 'plugin/reveal.js-menu/menu.js', async: true },
+					// Zoom in and out with Alt+click
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+				]
+			});
+		</script>
+	</body>
+</html>

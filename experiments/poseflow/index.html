@@ -1,0 +1,111 @@
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Poseflow: PoseNet + Lucas-Kanade (OpenCV.js)</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.8.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.8.0/addons/p5.dom.min.js"></script>
+  <script src="../../common/ml5.min.js"></script>
+ 
+  <style>
+      body {
+        margin: 0px;
+        /* overflow: hidden; */
+        color: black;
+        /* text-align: center; */
+      }
+  
+      h1 {
+        width: 100%;
+        z-index: 1;
+        font-size: 2.5rem;
+      }
+  
+      h2 {
+        width: 100%;
+        z-index: 1;
+      }
+  
+      p {
+        text-align: center;
+      }
+  
+      .title {
+        font-weight: 900;
+        color: white;
+        text-shadow: 0.075em 0.05em 0.1em rgba(0, 0, 0, 1);
+        text-align: center;
+      }
+  
+      #sketch-holder {
+        text-align: center;
+      }
+  
+      .hidden {
+        visibility: hidden;
+        opacity: 0;
+        transition: visibility 0s 2s, opacity 2s linear;
+      }
+  
+      #container {
+        position: relative;
+      }
+  
+      #video-holder,
+      #sketch-holder {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        /* top: 0;
+        left: 0; */
+        align-content: center;
+        text-align: center;
+      }
+  
+      #sketch-holder {
+        pointer-events: none;
+        z-index: 10;
+      }
+  </style>  
+</head>
+
+<body>
+  <h1 class="title">Poseflow: PoseNet + Lucas-Kanade (OpenCV.js)</h1>
+  <p id='status'>Loading model...</p>
+  <p id='opencv_status' class="hidden">Loading OpenCV...</p>
+
+  <div id="container">
+      <!-- https://stackoverflow.com/questions/2941189/how-to-overlay-one-div-over-another-div -->
+    <div id='sketch-holder'></div>
+    <div id="video-holder">
+      <!-- Our sketch will go here! -->
+    </div>
+  </div>
+  <script>
+    window.Module = {
+        loaded: false,
+        print: console.log,
+        printErr: function(text) {
+            document.getElementById('opencv_status').innerHTML = text;
+            console.error(text);
+        },
+        setStatus: function(text) {
+            document.getElementById('opencv_status').innerHTML = text;
+            console.log(text);
+        },
+        onRuntimeInitialized: function() {
+            document.getElementById('opencv_status').innerHTML = 'OpenCV Loaded';
+            this.loaded = true;
+            
+            // it would be better if we created the sketch at this point
+        }
+    };
+  </script>
+  <script async src="../../common/opencv.js"></script>
+  <script src="../../common/dat.gui.js"></script>
+  <script src="../../common/stats.js"></script>
+  <script src="sketch.js"></script>
+</body>
+
+</html>
