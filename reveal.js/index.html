@@ -246,19 +246,165 @@
 						<img src="images/openpose_overview.png" alt="" srcset="" style="margin-bottom: 0;">
 					</section>
 
+
+					
 					
 					<section data-menu-title="Arquitetura">
 						<h4>Arquitetura</h4>
 						<img src="images/openpose_architecture.png" alt="" srcset="" style="margin-bottom: 0;">
 					</section>
-
-
+					
+					
 					<section data-menu-title="Arquitetura - parts detection">
 						<h4 style="margin-top: 0.8em;">Arquitetura</h4>
 						<h4 style="font-size: 0.8em;">Parts detection</h4>
 						<img src="images/openpose_overview_parts_detection.png" alt="" srcset="" style="margin-bottom: 0;">
 					</section>
+					
+					
+					<section data-menu-title="Inferência">
+						<h4>&ThinSpace;</h4>
+						<div style="display: flex;">
+							<div style="width: 70%; margin-right: 5%;">
+								<h4 style="text-align: left;">
+									<a href="https://arvrjourney.com/human-pose-estimation-using-openpose-with-tensorflow-part-2-e78ab9104fc8" target="_blank" rel="noopener noreferrer">
+										Inferência
+									</a>
+								</h4>
+								<p style="text-align: left;">
+									Pós-processamento
+									<ul style="font-size: 0.8em;">
+										<li>NMS</li>
+										<!-- <li>Part Candidates</li> -->
+										<li>Bipartite Graphs</li>
+										<li>Line Integral</li>
+										<li>Weighted Bipartite Graphs</li>
+										<li>Assignment Algorithm</li>
+										<li>Connections</li>
+										<li>Merging</li>
+									</ul>
+								</p>
+							</div>
+							<div style="flex-grow: 1;">
+								<img src="images/openpose_pipeline.png" alt="" srcset="" style="max-width: 50%; height: auto;">
+							</div>
+						</div>
+					</section>
 
+					<section data-menu-title="Pós-processamento - NMS">
+						<h3 style="margin-top: 0.85em;">Pós-processamento</h3>
+						<h4 style="text-align: left; margin-bottom: 0.1em;">Non-maximum suppression</h4>
+						<div style="display: flex;">
+							<div style="width: 65%; margin-right: 3%;">
+								<p style="text-align: left; font-size: 0.5em;">
+									Para determinar a localização dos keypoints em coordenadas de pixel, 
+									é necessário executar o algoritmo non-maximum suppression (NMS):
+
+									<ol style="font-size: 0.50em;">
+										<li>Inicie no primeiro pixel do heatmap</li>
+										<li>A partir deste pixel crie uma janela 5x5 e identifique o pixel com valor máximo dentro dessa janela</li>
+										<li>Substitua o valor do pixel central por este valor máximo</li>
+										<li>Deslize um pixel da imagem com essa janela e repita o processo até completar todo o heatmap</li>
+										<li>Compare o heatmap gerado com o original. 
+											<ul>
+												<li>Os pixel que continuam com o mesmo valor são picos que procuramos.</li>
+												<li>Atribua o valor 0 aos demais pixels</li>
+											</ul>											 
+										</li>
+									</ol>
+								</p>
+
+							</div>
+							<div style="flex-grow: 1;">
+								<img src="images/openpose_nms.png" alt="" srcset="" style="margin-bottom: 0;">
+							</div>
+						</div>
+					</section>
+
+
+					<section data-menu-title="PP - Bipartite Graphs">
+						<h3 style="margin-top: 0.85em;">Pós-processamento</h3>
+						<h4 style="text-align: left; margin-bottom: 0.1em;">Bipartite Graphs</h4>
+						<div style="display: flex;">
+							<div style="width: 65%; margin-right: 3%;">
+								<p style="text-align: left; font-size: 0.5em;">
+									<ul style="text-align: left; font-size: 0.6em;">
+										<li>Now that we have found the candidates for each candidate of the body parts, we need to connect them to form pairs. </li>
+										<li>
+											So, what we have, is a complete bipartite graph, where the vertices are the part candidates, and the edges are the connection candidates.
+										</li>
+										<li>
+											Finding the best matching between vertices of a bipartite graph is a well-known problem in graph theory known as the assignment problem. 
+										</li>
+										<li>In order to solve it, each edge on the graph should have a weight.</li>
+										<!-- <li>Let’s put some weights on those edges.</li> -->
+										
+									</ul>
+								</p>
+
+							</div>
+							<div style="flex-grow: 1;">
+								<img src="images/openpose_bipartite_graph.png" alt="" srcset="" style="margin-bottom: 0;">
+							</div>
+						</div>
+					</section>
+
+
+					<section data-menu-title="PP - Line Integral">
+						<h3 style="margin-top: 0.85em;">Pós-processamento</h3>
+						<h4 style="text-align: left; margin-bottom: 0.1em;">Line Integral</h4>
+						<div style="display: flex;">
+							<div style="width: 65%; margin-right: 3%;">
+								<p style="text-align: left; font-size: 0.6em;">
+									This is where PAFs enter the pipeline. 
+									<ul style="text-align: left; font-size: 0.6em;">
+										<li>
+											We will compute the line integral along the segment connecting each couple of part candidates, 
+											over the corresponding PAFs (x and y) for that pair. 
+										</li>
+										<li>
+											The line integral will give each connection a score, 
+											that will be saved in a weighted bipartite graph and will allow us to solve the assignment problem.
+										</li>
+									</ul>
+									
+
+								</p>
+
+							</div>
+							<div style="flex-grow: 1;">
+								<img src="images/openpose_line_integral.png" alt="" srcset="" style="margin-bottom: 0;">
+							</div>
+						</div>
+					</section>
+
+
+					<section data-menu-title="PP - Assignment">
+						<h3 style="margin-top: 0.85em;">Pós-processamento</h3>
+						<h4 style="text-align: left; margin-bottom: 0.1em;">Assignment</h4>
+						<div style="display: flex;">
+							<div style="width: 65%; margin-right: 3%;">
+								<p style="text-align: left; font-size: 0.5em;">
+									The weighted bipartite graph shows all possible connections between candidates of two parts, and holds a score for every connection. 
+									The mission now is to find the connections that maximize the total score, that is, solving the assignment problem.
+
+
+
+									<ol style="font-size: 0.50em;">
+										<li>Sort each possible connection by its score.</li>
+										<li>The connection with the highest score is indeed a final connection.</li>
+										<li>Move to next possible connection. If no parts of this connection have been assigned to a final connection before, this is a final connection.</li>
+										<li>Repeat the step 3 until we are done.</li>
+									</ol>
+								</p>
+
+							</div>
+							<div style="flex-grow: 1;">
+								<img src="images/openpose_assignment.png" alt="" srcset="" style="margin-bottom: 0;">
+							</div>
+						</div>
+					</section>
+					
 
 					<section data-menu-title="Treinamento">
 						<h4>Treinamento</h4>
@@ -336,37 +482,6 @@
 							</div>
 						</div>
 					</section>					
-
-
-					<section data-menu-title="Pós-processamento">
-						<h3 style="margin-top: 0.85em;">Pós-processamento</h3>
-						<h4 style="text-align: left; margin-bottom: 0.1em;">Non-maximum suppression</h4>
-						<div style="display: flex;">
-							<div style="width: 65%; margin-right: 3%;">
-								<p style="text-align: left; font-size: 0.5em;">
-									Para determinar a localização dos keypoints em coordenadas de pixel, 
-									é necessário executar o algoritmo non-maximum suppression (NMS):
-
-									<ol style="font-size: 0.50em;">
-										<li>Inicie no primeiro pixel do heatmap</li>
-										<li>A partir deste pixel crie uma janela 5x5 e identifique o pixel com valor máximo dentro dessa janela</li>
-										<li>Substitua o valor do pixel central por este valor máximo</li>
-										<li>Deslize um pixel da imagem com essa janela e repita o processo até completar todo o heatmap</li>
-										<li>Compare o heatmap gerado com o original. 
-											<ul>
-												<li>Os pixel que continuam com o mesmo valor são picos que procuramos.</li>
-												<li>Atribua o valor 0 aos demais pixels</li>
-											</ul>											 
-										</li>
-									</ol>
-								</p>
-
-							</div>
-							<div style="flex-grow: 1;">
-								<img src="images/openpose_nms.png" alt="" srcset="" style="margin-bottom: 0;">
-							</div>
-						</div>
-					</section>
 
 
 					<section data-menu-title="Body keypoints">
@@ -995,12 +1110,14 @@
 
 				<section data-menu-title="BlazbePose">
 					<h2>
-						<a href="https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html" target="_blank" rel="noopener noreferrer">
-							BlazePose
-						</a>
+						BlazePose
 					</h2>
 					<section data-menu-title="BlazePose"> 
-						<h3>Real-time Body Pose Tracking On-device</h3>
+						<h3>
+							<a href="https://ai.googleblog.com/2020/08/on-device-real-time-body-pose-tracking.html" target="_blank" rel="noopener noreferrer">
+								Real-time Body Pose Tracking On-device
+							</a>
+						</h3>
 					</section>
 
 					<section data-menu-title="Visão Geral">
@@ -1061,8 +1178,6 @@
 					<section data-menu-title="Topologia">
 						<h3>Topologia</h3>
 						<div style="display: flex;">
-							<!-- <div style="width: 88%; margin-right: 0%;">
-							</div> -->
 							<div style="flex-grow: 1;">
 								<img src="images/blazepose_topology.jpg" alt="" srcset="" style="margin-bottom: 0;">
 								<p style="font-size: 0.35em; margin-top: 0;">
@@ -1073,15 +1188,22 @@
 
 					</section>
 
+					<section data-menu-title="Topologia">
+						<h3>Topologia</h3>
+						<div style="display: flex;">
+							<div style="flex-grow: 1;">
+								<img src="images/blazepose_pose_tracking_detector_vitruvian_man.png" alt="" srcset="" style="margin-bottom: 0;">
+								<p style="font-size: 0.35em; margin-top: 0;">
+									Vitruvian man aligned via two virtual keypoints predicted by BlazePose detector in addition to the face bounding box.
+								</p>
+							</div>
+						</div>
+
+					</section>
+
 					<section data-menu-title="Topologia: MediaPipe">
 						<h3>Topologia <a href="https://google.github.io/mediapipe/solutions/pose#mobile" target="_blank" rel="noopener noreferrer">MediaPipe</a></h3>
 						<div style="display: flex;">
-							<!-- <div style="width: 88%; margin-right: 0%;">
-								<img src="images/blazepose_topology.jpg" alt="" srcset="" style="margin-bottom: 0;">
-								<p style="font-size: 0.35em; margin-top: 0;">
-									BlazePose 33 keypoint topology as COCO (colored with green) superset
-								</p>
-							</div> -->
 							<div style="flex-grow: 1;">
 								<img src="images/blazepose_pose_tracking_upper_body_landmarks.png" alt="" srcset="" style="margin-bottom: 0;">
 								<p style="font-size: 0.45em; margin-top: 0;">
