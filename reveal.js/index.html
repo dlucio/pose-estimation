@@ -1121,29 +1121,24 @@
 					</section>
 
 					<section data-menu-title="Visão Geral">
-						<!-- <h3>Visão Geral</h3> -->
 						<h4 style="text-align: left;">Pipeline</h4>
-						<p style="text-align: left; font-size: 0.8em;">
-							The solution utilizes a two-step detector-tracker ML pipeline. 
-							<ul style="font-size: 0.8em;">
-								<li>Using a detector, the pipeline first locates the pose region-of-interest (ROI) within the frame.</li>
-								<li>The tracker subsequently predicts the pose landmarks within the ROI using the ROI-cropped frame as input. </li>
-							</ul>
-						<p>
-						<p style="text-align: left; font-size: 0.8em;">
-							Note that for video use cases the detector is invoked only as needed 
-							<ul style="font-size: 0.8em;">
-								<li>For the very first frame and when the tracker could no longer identify body pose presence in the previous frame.</li>
-								<li>For other frames the pipeline simply derives the ROI from the previous frame’s pose landmarks.</li>
-							</ul>
-						</p>
-					</section>
-
-					<section data-menu-title="Pipeline">
-						<h3>Pipeline</h3>
 						<div style="display: flex;">
-							<!-- <div style="width: 88%; margin-right: 0%;">
-							</div> -->
+							<div style="width: 88%; margin-right: 5%;">
+								<p style="text-align: left; font-size: 0.7em;">
+									The solution utilizes a two-step detector-tracker ML pipeline. 
+									<ul style="font-size: 0.7em;">
+										<li>Using a detector, the pipeline first locates the pose region-of-interest (ROI) within the frame.</li>
+										<li>The tracker subsequently predicts the pose landmarks within the ROI using the ROI-cropped frame as input. </li>
+									</ul>
+								<p>
+								<p style="text-align: left; font-size: 0.7em;">
+									Note that for video use cases the detector is invoked only as needed 
+									<ul style="font-size: 0.7em;">
+										<li>For the very first frame and when the tracker could no longer identify body pose presence in the previous frame.</li>
+										<li>For other frames the pipeline simply derives the ROI from the previous frame’s pose landmarks.</li>
+									</ul>
+								</p>
+							</div>
 							<div style="flex-grow: 1;">
 								<img src="images/blazepose_pipeline.jpg" alt="" srcset="" style="margin-bottom: 0;">
 								<p style="font-size: 0.35em; margin-top: 0;">
@@ -1152,23 +1147,61 @@
 							</div>
 						</div>
 
-					</section>					
-
-					<section data-menu-title="Tracking model">
-						<h3>Tracking Model</h3>
+					</section>
+					
+					<section data-menu-title="Pose Detection Model">
+						<h4>Pose Detection Model</h4>
 						<div style="display: flex;">
-							<div style="width: 60%; margin-right: 5%; font-size: 0.8em; text-align: left;">
-								During training 
-								<ul style="font-size: 0.9em;">
-									<li>first employ a heatmap and offset loss to train the center and left tower of the network.</li>
-									<li>then remove the heatmap output and train the regression encoder (right tower)</li>
-									<li>thus, effectively using the heatmap to supervise a lightweight embedding.</li>
+							<div style="width: 90%; margin-right: 5%; font-size: 0.8em; text-align: left;">
+								BlazePose Detector 
+								<ul style="font-size: 0.9em; text-align: justify;">
+									<li>The detector is inspired by our own lightweight BlazeFace model as a proxy for a person detector.</li>
+									<li>
+										The detector predicts:
+										<ul style="text-align: left;">
+											<li>the midpoint of a person’s hips</li>
+											<li>the radius of a circle circumscribing the whole person</li>
+											<li>the incline angle of the line connecting the shoulder and hip midpoints</li>
+										</ul> 
+									</li>
 								</ul>
 							</div>
 							<div style="flex-grow: 1;">
-								<img src="images/blazepose_tracking_model.jpg" alt="" srcset="" style="margin-bottom: 0;">
-								<p style="font-size: 0.45em; margin-top: 0; text-align: left;">
-									Tracking network architecture: regression with heatmap supervision
+								<img src="images/blazepose_pose_tracking_detector_vitruvian_man.png" alt="" srcset="" style="margin-bottom: 0;">
+								<p style="font-size: 0.35em; margin-top: 0; text-align: justify;">
+									Vitruvian man aligned via two virtual keypoints predicted by BlazePose detector in addition to the face bounding box.
+								</p>
+							</div>
+						</div>
+					</section>
+
+
+					<section data-menu-title="Pose Landmark Model">
+						<h3>
+							<a href="https://google.github.io/mediapipe/solutions/pose#pose-landmark-model-blazepose-tracker" target="_blank" rel="noopener noreferrer">
+								Pose Landmark Model
+							</a>
+						</h3>
+						<div style="display: flex;">
+							<div style="width: 88%; margin-right: 5%; font-size: 0.65em; text-align: left;">
+								BlazePose Tracker 
+								<ul style="font-size: 0.95em; text-align: justify;">
+									<li>The landmark model currently included in MediaPipe Pose predicts the location of 25 upper-body landmarks</li>
+									<li>Each landmark is composed by (x, y, z, visibility)
+										<ul>
+											<li>
+												<em>
+													Note that the z value should be discarded as the model is currently not fully trained to predict depth
+												</em>
+											</li>
+										</ul> 
+									</li>
+								</ul>
+							</div>
+							<div style="flex-grow: 1;">
+								<img src="images/blazepose_pose_tracking_upper_body_landmarks.png" alt="" srcset="" style="margin-bottom: 0;">
+								<p style="font-size: 0.45em; margin-top: 0;">
+									MediaPipe Pose predicts the location of 25 upper-body landmarks
 								</p>
 							</div>
 						</div>
@@ -1176,7 +1209,7 @@
 
 
 					<section data-menu-title="Topologia">
-						<h3>Topologia</h3>
+						<h3>Full-body topology</h3>
 						<div style="display: flex;">
 							<div style="flex-grow: 1;">
 								<img src="images/blazepose_topology.jpg" alt="" srcset="" style="margin-bottom: 0;">
@@ -1186,32 +1219,6 @@
 							</div>
 						</div>
 
-					</section>
-
-					<section data-menu-title="Topologia">
-						<h3>Topologia</h3>
-						<div style="display: flex;">
-							<div style="flex-grow: 1;">
-								<img src="images/blazepose_pose_tracking_detector_vitruvian_man.png" alt="" srcset="" style="margin-bottom: 0;">
-								<p style="font-size: 0.35em; margin-top: 0;">
-									Vitruvian man aligned via two virtual keypoints predicted by BlazePose detector in addition to the face bounding box.
-								</p>
-							</div>
-						</div>
-
-					</section>
-
-					<section data-menu-title="Topologia: MediaPipe">
-						<h3>Topologia <a href="https://google.github.io/mediapipe/solutions/pose#mobile" target="_blank" rel="noopener noreferrer">MediaPipe</a></h3>
-						<div style="display: flex;">
-							<div style="flex-grow: 1;">
-								<img src="images/blazepose_pose_tracking_upper_body_landmarks.png" alt="" srcset="" style="margin-bottom: 0;">
-								<p style="font-size: 0.45em; margin-top: 0;">
-									MediaPipe Pose predicts the location of 25 upper-body landmarks (see figure below), each with (x, y, z, visibility). <br>
-									Note that the z value should be discarded as the model is currently not fully trained to predict depth.
-								</p>
-							</div>
-						</div>
 					</section>
 
 					<section data-menu-title="Desempenho">
